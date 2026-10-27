@@ -1,0 +1,238 @@
+<title>Proforma Collision</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  /* One column: the client file as it already stands, one control, the stranded figure as hero. */
+  :root{
+    --bg:#f5f7f3; --surface:#ffffff; --surface-2:#eef1ea;
+    --fg:#161c18; --muted:#5d6a62; --line:#d6dcd2;
+    --ink:#1b4d3e; --danger:#a32a1c; --danger-bg:#fbeae7;
+    --ok:#1b4d3e; --ok-bg:#e8f2ec; --pf:#6b5a2e; --pf-bg:#f6f0df;
+    --sans:"IBM Plex Sans",ui-sans-serif,-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    --bg:#0d100e; --surface:#151a17; --surface-2:#1b211d;
+    --fg:#e7ece8; --muted:#909d95; --line:#28302b;
+    --ink:#7fc8a9; --danger:#f2887a; --danger-bg:#2c1512;
+    --ok:#7fc8a9; --ok-bg:#122019; --pf:#d8c48a; --pf-bg:#241f12; color-scheme:dark; } }
+  :root[data-theme="dark"]{
+    --bg:#0d100e; --surface:#151a17; --surface-2:#1b211d;
+    --fg:#e7ece8; --muted:#909d95; --line:#28302b;
+    --ink:#7fc8a9; --danger:#f2887a; --danger-bg:#2c1512;
+    --ok:#7fc8a9; --ok-bg:#122019; --pf:#d8c48a; --pf-bg:#241f12; color-scheme:dark; }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg); color:var(--fg); font-family:var(--sans); line-height:1.45;
+       padding-left:max(16px,env(safe-area-inset-left,0px));
+       padding-right:max(16px,env(safe-area-inset-right,0px));
+       padding-block:22px 34px;}
+  .wrap{max-width:780px; margin:0 auto; display:flex; flex-direction:column; gap:15px}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:0}
+  h1{font-size:clamp(19px,4.5vw,25px); line-height:1.25; font-weight:650; margin:4px 0 0; text-wrap:balance}
+  .lede{margin:6px 0 0; color:var(--muted); font-size:13.5px; max-width:62ch}
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:10px}
+  .controls{padding:14px; display:flex; flex-direction:column; gap:12px}
+  .seg{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+  .seg button{flex:1 1 0; min-width:0; appearance:none; border:0; background:var(--surface-2);
+    color:var(--muted); font-family:var(--sans); font-size:12.5px; font-weight:550;
+    padding:9px 8px; cursor:pointer; line-height:1.3}
+  .seg button[aria-pressed="true"]{background:var(--ink); color:var(--surface)}
+  .seg button:focus-visible{outline:2px solid var(--ink); outline-offset:-2px}
+  .runrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .run{appearance:none; border:0; border-radius:8px; background:var(--ink); color:var(--surface);
+       font-family:var(--sans); font-size:15px; font-weight:650; padding:12px 20px; cursor:pointer}
+  .run:focus-visible{outline:2px solid var(--fg); outline-offset:2px}
+  .reset{appearance:none; background:none; border:1px solid var(--line); border-radius:8px;
+         color:var(--muted); font-size:12.5px; padding:11px 14px; cursor:pointer; font-family:var(--sans)}
+  .count{font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:auto; font-variant-numeric:tabular-nums}
+  .tablewrap{overflow-x:auto}
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px;
+        font-variant-numeric:tabular-nums; min-width:520px}
+  caption{text-align:left; padding:12px 14px 8px; font-family:var(--sans); font-size:12px;
+          font-weight:600; color:var(--muted); letter-spacing:.04em; text-transform:uppercase}
+  th{text-align:left; font-weight:550; color:var(--muted); font-size:10.5px; letter-spacing:.05em;
+     padding:6px 12px; border-bottom:1px solid var(--line); text-transform:uppercase}
+  td{padding:7px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  td.num{text-align:right}
+  .tag{font-size:10px; letter-spacing:.04em; text-transform:uppercase; font-weight:600; display:block; margin-top:2px}
+  tr.pf td{background:var(--pf-bg)} tr.pf .tag{color:var(--pf)}
+  tr.bad td{background:var(--danger-bg); color:var(--danger); font-weight:600}
+  tr.good td{background:var(--ok-bg)}
+  .figures{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line);
+           border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  .fig{background:var(--surface); padding:14px} .fig.wide{grid-column:1/-1}
+  .fig .k{font-size:10.5px; color:var(--muted); letter-spacing:.05em; text-transform:uppercase; font-family:var(--mono)}
+  .fig .v{font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:600;
+          font-size:clamp(21px,6vw,32px); margin-top:4px; letter-spacing:-.01em}
+  .fig .v.alarm{color:var(--danger)} .fig .v.fine{color:var(--ok)}
+  .fig .sub{font-size:11.5px; color:var(--muted); margin-top:3px}
+  .fig.small .v{font-size:clamp(17px,4.2vw,21px)}
+  .verdict{padding:12px 14px; border-radius:10px; font-size:13.5px; border:1px solid var(--line);
+           background:var(--surface-2); color:var(--muted)}
+  .verdict.bad{background:var(--danger-bg); border-color:var(--danger); color:var(--danger); font-weight:550}
+  .verdict.good{background:var(--ok-bg); border-color:var(--ok); color:var(--ok); font-weight:550}
+  .foot{font-size:11.5px; color:var(--muted); max-width:68ch}
+  .foot code{font-family:var(--mono); font-size:11px}
+  @media (max-width:430px){ .figures{grid-template-columns:1fr} }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Lacerte Individual TY2025 · client proforma'd forward from TY2024</p>
+    <h1>This client file is not empty. Click Run import once.</h1>
+    <p class="lede">Two activities already carried forward, holding a §179 carryover and an accumulated depreciation schedule, waiting for this year's figures. The workbook has figures for both.</p>
+  </header>
+
+  <div class="panel controls">
+    <div class="seg" role="group" aria-label="Prefix strategy">
+      <button id="mode-next" aria-pressed="true">“Next available Prefix” — the brief</button>
+      <button id="mode-key" aria-pressed="false">Match on EIN / address first</button>
+    </div>
+    <div class="runrow">
+      <button class="run" id="run">Run import</button>
+      <button class="reset" id="reset">Reset to proforma</button>
+      <span class="count" id="count">0 runs</span>
+    </div>
+  </div>
+
+  <div class="panel tablewrap">
+    <table>
+      <caption>Activities in the client file</caption>
+      <thead><tr><th>Screen</th><th>Prefix</th><th>Activity</th><th>Identifier</th><th class="num">This year</th><th class="num">Carried forward</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="figures">
+    <div class="fig wide">
+      <div class="k">Carryover and accumulated depreciation stranded on an empty activity</div>
+      <div class="v" id="stranded">0.00</div>
+      <div class="sub" id="stranded-sub">Nothing imported yet</div>
+    </div>
+    <div class="fig small">
+      <div class="k">Activities on the return</div>
+      <div class="v" id="acts">2</div>
+      <div class="sub">The client has two</div>
+    </div>
+    <div class="fig small">
+      <div class="k">Lacerte diagnostics</div>
+      <div class="v" id="diag">0</div>
+      <div class="sub">Two Schedule Cs is a legal return</div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict">The file as proforma'd. Both activities hold last year's carryovers and are waiting to be filled.</div>
+
+  <p class="foot">
+    Invented client, invented figures. What is not invented: Intuit's proforma documentation
+    lists names tied to <em>business, estates, partners and shareholders</em>, carryover amounts
+    and depreciation data as carrying forward. W-2 employers are not named in it, so this
+    demo does not claim they carry — the Schedule C and the rental are enough.
+    §179 carryover <code>2,140.00</code> plus accumulated depreciation <code>18,407.00</code>.
+  </p>
+</div>
+
+<script>
+(function(){
+  var SEED = [
+    {screen:16, label:"Hartigan Survey & Mapping", id:"EIN 88-1143067",
+     amount:0, carried:2140.00, carriedLabel:"§179 carryover", kind:"pf"},
+    {screen:18, label:"2114 W Berteau Ave Unit 2", id:"property address",
+     amount:0, carried:18407.00, carriedLabel:"accum. depreciation", kind:"pf"}
+  ];
+  var BOOK = [
+    {screen:16, label:"Hartigan Survey & Mapping", id:"EIN 88-1143067", amount:48217.00},
+    {screen:18, label:"2114 W Berteau Ave Unit 2", id:"property address", amount:31200.00}
+  ];
+  var mode="next", runs=0, rows=[];
+  var $=function(i){return document.getElementById(i);};
+  var money=function(n){return n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});};
+
+  function seed(){
+    rows = SEED.map(function(r){
+      return {screen:r.screen,prefix:1,label:r.label,id:r.id,amount:r.amount,
+              carried:r.carried,carriedLabel:r.carriedLabel,kind:"pf"};
+    });
+  }
+
+  function nextPrefix(screen){
+    var used = rows.filter(function(r){return r.screen===screen;}).map(function(r){return r.prefix;});
+    var i=1; while(used.indexOf(i)!==-1) i++; return i;
+  }
+
+  function runImport(){
+    runs++;
+    BOOK.forEach(function(b){
+      if (mode==="key"){
+        var m = rows.filter(function(r){return r.screen===b.screen && r.id===b.id;})[0];
+        if (m){ m.amount = b.amount; m.kind = "good"; return; }
+      }
+      rows.push({screen:b.screen,prefix:nextPrefix(b.screen),label:b.label,id:b.id,
+                 amount:b.amount,carried:0,carriedLabel:"none",kind:"bad"});
+    });
+    render();
+  }
+
+  function render(){
+    var tb=$("rows"); tb.innerHTML="";
+    rows.forEach(function(r){
+      var tr=document.createElement("tr"); tr.className=r.kind;
+      var tag = r.kind==="pf" ? '<span class="tag">proforma’d — awaiting figures</span>'
+              : r.kind==="bad" ? '<span class="tag">new activity</span>'
+              : '<span class="tag">filled — carryover intact</span>';
+      tr.innerHTML = "<td>"+r.screen+"</td><td>"+r.prefix+"</td><td>"+r.label+tag+"</td>"+
+        "<td>"+r.id+'</td><td class="num">'+money(r.amount)+'</td><td class="num">'+
+        (r.carried?money(r.carried)+"<br>"+r.carriedLabel:"—")+"</td>";
+      tb.appendChild(tr);
+    });
+
+    var stranded = rows.reduce(function(s,r){
+      return s + ((r.carried>0 && r.amount===0 && runs>0) ? r.carried : 0); },0);
+    var acts = rows.length;
+
+    $("count").textContent = runs + (runs===1?" run":" runs");
+    $("acts").textContent = String(acts);
+    $("diag").textContent = "0";
+    var st=$("stranded");
+    st.textContent = money(stranded);
+    st.className = "v" + (stranded>0 ? " alarm" : (runs>0 ? " fine" : ""));
+    $("stranded-sub").textContent = runs===0 ? "Nothing imported yet"
+      : stranded>0 ? "Sitting on activities reporting no income"
+      : "Every carryover is attached to this year's figures";
+
+    var v=$("verdict");
+    if (runs===0){ v.className="verdict";
+      v.textContent="The file as proforma'd. Both activities hold last year's carryovers and are waiting to be filled."; return; }
+    if (stranded>0){
+      v.className="verdict bad";
+      v.textContent="Run "+runs+" created "+(acts-2)+" more activities instead of filling the two that were already there. "+
+        "The return now shows "+acts+" activities for a client who has two. The §179 carryover and the depreciation schedule "+
+        "are attached to the empty ones; this year's income is attached to activities with no basis history. "+
+        "Depreciation is understated, and no diagnostic fires — two Schedule Cs is a legal return. "+
+        "Basis errors do not surface in the year you make them.";
+    } else if (runs>1){
+      v.className="verdict good";
+      v.textContent="Run "+runs+" matched both activities again and wrote nothing. Still two activities, carryovers untouched. "+
+        "That is what makes it safe to re-run in March when a corrected document arrives.";
+    } else {
+      v.className="verdict good";
+      v.textContent="Matched on EIN and property address before allocating anything, so this year's figures went into the "+
+        "activities that already held the carryovers. Two activities, both complete, basis history intact.";
+    }
+  }
+
+  function setMode(m){ mode=m;
+    $("mode-next").setAttribute("aria-pressed",String(m==="next"));
+    $("mode-key").setAttribute("aria-pressed",String(m==="key"));
+    reset(); }
+  function reset(){ runs=0; seed(); render(); }
+
+  $("run").addEventListener("click",runImport);
+  $("reset").addEventListener("click",reset);
+  $("mode-next").addEventListener("click",function(){setMode("next");});
+  $("mode-key").addEventListener("click",function(){setMode("key");});
+  reset();
+})();
+</script>
